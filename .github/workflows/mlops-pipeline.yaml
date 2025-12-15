@@ -1,0 +1,96 @@
+name: MLOps Sentinel Pipeline
+
+on:
+   push:
+      branches: ['main']
+
+permissions:
+   contents: read
+   packages: write
+
+env:
+   GROUP: 'sentinel-mlops-rg'
+   WORKSPACE: 'sentinel-ml-workspace'
+   LOCATION: 'westeurope'
+
+jobs:
+   train-and-register:
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout
+           uses: actions/checkout@v4
+
+         - name: Azure Login
+           uses: azure/login@v2
+           with:
+              creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+         - name: Install Azure ML CLI
+           run: |
+              az extension add -n ml -y
+              az configure --defaults group=${{ env.GROUP }} workspace=${{ env.WORKSPACE }} location=${{ env.LOCATION }}
+
+         - name: Create/Start Compute
+           run: |
+              az ml compute create --name cpu-cluster --size Standard_DS11_v2 --min-instances 0 --max-instances 2 --type AmlCompute || echo "Compute exists"
+           continue-on-error: true
+
+         - name: Run Training Pipeline
+           run: |
+              az ml job create --file pipeline-job.yaml --stream
+
+   build-and-deploy:
+      needs: train-and-register
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout
+           uses: actions/checkout@v4
+
+         - name: Azure Login
+           uses: azure/login@v2
+           with:
+              creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+         - name: Download Model
+           run: |
+              az extension add -n ml -y
+              az configure --defaults group=${{ env.GROUP }} workspace=${{ env.WORKSPACE }} location=${{ env.LOCATION }}
+              # Get latest version
+              VERSION=$(az ml model list -n gun-detection-yolo --query "[0].version" -o tsv)
+              # Download to inference folder
+              az ml model download --name gun-detection-yolo --version $VERSION --target-dir ./inference --overwrite
+
+         - name: Login to GitHub Container Registry
+           uses: docker/login-action@v3
+           with:
+              registry: ghcr.io
+              username: ${{ github.actor }}
+              password: ${{ secrets.GITHUB_TOKEN }}
+
+         - name: Build and Push Docker Image
+           uses: docker/build-push-action@v5
+           with:
+              context: ./inference
+              push: true
+              tags: |
+                 ghcr.io/${{ github.repository_owner }}/sentinel-api:latest
+                 ghcr.io/${{ github.repository_owner }}/sentinel-api:${{ github.sha }}
+
+         - name: Configure kubectl for AKS
+           run: |
+              az aks get-credentials \
+                --resource-group ${{ env.GROUP }} \
+                --name sentinel-aks \
+                --overwrite-existing
+
+         - name: Update deployment image
+           run: |
+              sed -i "s|ghcr.io/PLACEHOLDER_USERNAME/sentinel-api:latest|ghcr.io/${{ github.repository_owner }}/sentinel-api:${{ github.sha }}|g" k8s/deployment.yaml
+
+         - name: Deploy to Kubernetes
+           uses: azure/k8s-deploy@v4
+           with:
+              manifests: |
+                 k8s/deployment.yaml
+              images: |
+                 ghcr.io/${{ github.repository_owner }}/sentinel-api:${{ github.sha }}

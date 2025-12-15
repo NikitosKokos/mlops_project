@@ -1,0 +1,29 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: Gun Detection Pipeline
+experiment_name: gun-detection-exp
+
+settings:
+  default_compute: azureml:cpu-cluster
+
+jobs:
+  train_model:
+    type: command
+    component: ./components/training/training.yaml
+    inputs:
+      data_path: 
+        type: uri_folder
+        path: azureml:gun-dataset:1 # Upload your kaggle dataset to Azure Data Assets first!
+      epochs: 20
+    outputs:
+      model_output: 
+        mode: upload
+  
+  register_model:
+    type: command
+    component: azureml://registries/azureml/components/register_model/versions/0.0.1
+    inputs:
+      model_name: gun-detection-yolo
+      model_type: custom_model
+      model_path: ${{parent.jobs.train_model.outputs.model_output}}
+

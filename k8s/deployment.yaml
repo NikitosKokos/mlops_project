@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: sentinel-api
+spec:
+   replicas: 2
+   selector:
+      matchLabels:
+         app: sentinel-api
+   template:
+      metadata:
+         labels:
+            app: sentinel-api
+      spec:
+         containers:
+            - name: sentinel-container
+              image: ghcr.io/PLACEHOLDER_USERNAME/sentinel-api:latest
+              ports:
+                 - containerPort: 8000
+              resources:
+                 requests:
+                    memory: '512Mi'
+                    cpu: '500m'
+                 limits:
+                    memory: '1Gi'
+                    cpu: '1000m'
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: sentinel-service
+spec:
+   type: LoadBalancer
+   selector:
+      app: sentinel-api
+   ports:
+      - port: 80
+        targetPort: 8000

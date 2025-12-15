@@ -1,0 +1,15 @@
+name: ultralytics-env
+channels:
+   - conda-forge
+   - defaults
+dependencies:
+   - python=3.9
+   - pip
+   - pip:
+        - ultralytics
+        - torch
+        - torchvision
+        - pyyaml
+        - pillow
+        - opencv-python-headless
+        - setuptools

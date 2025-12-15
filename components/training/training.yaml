@@ -1,0 +1,25 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+
+name: yolo_training
+display_name: YOLOv8 Training
+version: 1
+
+inputs:
+   data_path:
+      type: uri_folder
+   epochs:
+      type: integer
+      default: 10
+
+outputs:
+   model_output:
+      type: uri_folder
+
+code: .
+environment: azureml:ultralytics-env:5
+command: >-
+   python train.py 
+   --data_path ${{inputs.data_path}} 
+   --epochs ${{inputs.epochs}} 
+   --model_output ${{outputs.model_output}}

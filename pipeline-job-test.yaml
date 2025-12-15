@@ -1,0 +1,20 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: Gun Detection Pipeline - Test (1 Epoch)
+experiment_name: gun-detection-exp
+
+settings:
+   default_compute: azureml:cpu-cluster
+
+jobs:
+   train_model:
+      type: command
+      component: ./components/training/training.yaml
+      inputs:
+         data_path:
+            type: uri_folder
+            path: azureml:gun-dataset:1
+         epochs: 1 # Only 1 epoch for quick testing
+      outputs:
+         model_output:
+            mode: upload

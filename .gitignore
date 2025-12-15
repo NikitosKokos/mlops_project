@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Model files
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pb
+
+# Azure ML
+.azureml/
+*.runconfig
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data
+data/
+datasets/
+gun-dataset/
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+
+# Secrets
+kaggle.json
+*.key
+*.pem
+
+# Large files
+*.zip
+*.tar.gz
+
