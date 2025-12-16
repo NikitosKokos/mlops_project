@@ -17,7 +17,7 @@ outputs:
       type: uri_folder
 
 code: .
-environment: azureml:ultralytics-env:5
+environment: azureml:ultralytics-env:2
 command: >-
    python train.py 
    --data_path ${{inputs.data_path}} 
