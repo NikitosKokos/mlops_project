@@ -11,7 +11,7 @@ permissions:
 env:
    GROUP: 'sentinel-mlops-rg'
    WORKSPACE: 'sentinel-ml-workspace'
-   LOCATION: 'westeurope'
+   LOCATION: 'germanywestcentral'  # Updated to match actual workspace location
 
 jobs:
    train-and-register:
